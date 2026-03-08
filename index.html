@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Happy Birthday 🎂</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rose: #e8526a;
+    --gold: #f5c842;
+    --dark: #1a0a0e;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Lato', sans-serif;
+    background: var(--dark);
+    color: white;
+    overflow: hidden;
+  }
+
+  /* ── Floating hearts canvas ── */
+  #heartsCanvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── INTRO ── */
+  #intro {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse at 60% 40%, #5c0a1e 0%, #1a0a0e 70%);
+    text-align: center;
+    padding: 2rem;
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  #intro.hide { opacity: 0; pointer-events: none; transform: scale(1.04); }
+
+  .intro-label {
+    font-weight: 300;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    color: var(--gold);
+    margin-bottom: 1.2rem;
+    opacity: 0;
+    animation: fadeUp 1s 0.3s forwards;
+  }
+
+  #intro h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.4rem, 7vw, 5rem);
+    font-weight: 700;
+    line-height: 1.1;
+    opacity: 0;
+    animation: fadeUp 1s 0.6s forwards;
+  }
+  #intro h1 span { color: var(--gold); font-style: italic; }
+
+  .intro-sub {
+    font-size: 1rem;
+    color: rgba(255,255,255,0.6);
+    margin-top: 1rem;
+    font-weight: 300;
+    letter-spacing: 0.05em;
+    opacity: 0;
+    animation: fadeUp 1s 0.9s forwards;
+  }
+
+  .cake {
+    font-size: 5rem;
+    margin-bottom: 1.5rem;
+    opacity: 0;
+    animation: fadeUp 1s 0s forwards, float 3s 1s ease-in-out infinite;
+    filter: drop-shadow(0 0 18px rgba(245,200,66,0.5));
+  }
+
+  #countdown-wrapper {
+    margin-top: 2.5rem;
+    opacity: 0;
+    animation: fadeUp 1s 1.2s forwards;
+  }
+  #countdown-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 0.6rem;
+  }
+  #countdown-number {
+    font-family: 'Playfair Display', serif;
+    font-size: 5rem;
+    font-weight: 700;
+    color: var(--rose);
+    line-height: 1;
+    text-shadow: 0 0 30px rgba(232,82,106,0.7);
+    transition: transform 0.15s ease;
+  }
+  #countdown-number.pulse { transform: scale(1.25); }
+
+  .enter-btn {
+    display: none;
+    margin-top: 2.2rem;
+    padding: 0.85rem 2.5rem;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    border: 1.5px solid var(--gold);
+    border-radius: 50px;
+    background: transparent;
+    color: var(--gold);
+    cursor: pointer;
+    transition: background 0.3s, color 0.3s, box-shadow 0.3s;
+    animation: fadeUp 0.6s forwards;
+  }
+  .enter-btn:hover {
+    background: var(--gold);
+    color: var(--dark);
+    box-shadow: 0 0 25px rgba(245,200,66,0.4);
+  }
+
+  /* ── SLIDESHOW ── */
+  #slideshow {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: black;
+  }
+
+  .slide {
+    display: none;
+    position: absolute;
+    inset: 0;
+  }
+  .slide.active {
+    display: block;
+    animation: crossfade 1.2s ease forwards;
+  }
+  @keyframes crossfade {
+    from { opacity: 0; transform: scale(1.04); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  .slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Cinematic letterbox bars */
+  .slide::before, .slide::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    height: 10vh;
+    background: black;
+    z-index: 2;
+  }
+  .slide::before { top: 0; }
+  .slide::after  { bottom: 0; }
+
+  /* Vignette overlay */
+  .slide-vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.65) 100%);
+    z-index: 3;
+    pointer-events: none;
+  }
+
+  /* Caption */
+  .caption {
+    position: absolute;
+    bottom: 10vh;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 4;
+    text-align: center;
+    pointer-events: none;
+    animation: captionSlide 0.9s 0.3s both;
+    width: 90%;
+  }
+  @keyframes captionSlide {
+    from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
+  .caption-inner {
+    display: inline-block;
+    background: rgba(10,0,5,0.55);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 0.6rem 1.8rem;
+  }
+  .caption-inner p {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: clamp(0.9rem, 2.5vw, 1.2rem);
+    color: rgba(255,255,255,0.92);
+    letter-spacing: 0.03em;
+  }
+
+  /* HUD top bar */
+  #hud {
+    position: fixed;
+    top: 10vh;
+    left: 0; right: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 1.5rem;
+    background: rgba(0,0,0,0.35);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .hud-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.9rem;
+    font-style: italic;
+    color: var(--gold);
+    letter-spacing: 0.05em;
+  }
+  .hud-counter {
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    color: rgba(255,255,255,0.5);
+  }
+
+  /* Progress bar */
+  #progress-track {
+    position: fixed;
+    top: 10vh;
+    left: 0; right: 0;
+    height: 3px;
+    background: rgba(255,255,255,0.1);
+    z-index: 6;
+  }
+  #progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--rose), var(--gold));
+    transition: width 0.4s ease;
+    border-radius: 0 3px 3px 0;
+    box-shadow: 0 0 8px rgba(245,200,66,0.5);
+  }
+
+  /* Controls */
+  #controls {
+    position: fixed;
+    bottom: 10vh;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .ctrl-btn {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,0.2);
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(8px);
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color 0.2s, background 0.2s, transform 0.15s;
+  }
+  .ctrl-btn:hover {
+    border-color: var(--gold);
+    background: rgba(245,200,66,0.15);
+    transform: scale(1.1);
+  }
+  #pauseBtn { width: 54px; height: 54px; font-size: 1.15rem; border-color: rgba(255,255,255,0.35); }
+
+  /* ── END SCREEN ── */
+  #endScreen {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    background: radial-gradient(ellipse at 40% 60%, #5c0a1e 0%, #1a0a0e 70%);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+  }
+  #endScreen h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 6vw, 4rem);
+    font-weight: 700;
+    margin-bottom: 1rem;
+    animation: fadeUp 1s forwards;
+  }
+  #endScreen h2 span { color: var(--gold); font-style: italic; }
+  #endScreen p {
+    font-size: 1rem;
+    color: rgba(255,255,255,0.6);
+    font-weight: 300;
+    max-width: 420px;
+    line-height: 1.7;
+    animation: fadeUp 1s 0.3s both;
+  }
+  .replay-btn {
+    margin-top: 2rem;
+    padding: 0.8rem 2rem;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    border: 1.5px solid var(--rose);
+    border-radius: 50px;
+    background: transparent;
+    color: var(--rose);
+    cursor: pointer;
+    transition: background 0.3s, color 0.3s;
+    animation: fadeUp 1s 0.6s both;
+  }
+  .replay-btn:hover { background: var(--rose); color: white; }
+
+  /* ── Keyframes ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-12px); }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="heartsCanvas"></canvas>
+<audio id="bgMusic" src="song.mp3" loop></audio>
+
+<!-- ── INTRO ── -->
+<section id="intro">
+  <div class="cake">🎂</div>
+  <div class="intro-label">A Special Surprise For</div>
+  <h1>Happy Birthday,<br><span>Mr. 6 ft</span></h1>
+  <p class="intro-sub">You are one of the most amazing people in my life ❤️</p>
+  <div id="countdown-wrapper">
+    <div id="countdown-label">Opening in</div>
+    <div id="countdown-number">3</div>
+    <button class="enter-btn" id="enterBtn" onclick="startSlideshow()">Open Surprise 🎁</button>
+  </div>
+</section>
+
+<!-- ── SLIDESHOW ── -->
+<section id="slideshow">
+  <div id="progress-track"><div id="progress-fill"></div></div>
+  <div id="hud">
+    <span class="hud-title">Our Memories 💖</span>
+    <span class="hud-counter" id="counterText">1 / 38</span>
+  </div>
+
+  <div class="slide"><img src="photo1.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 1 💖</p></div></div></div>
+  <div class="slide"><img src="photo2.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 2 💖</p></div></div></div>
+  <div class="slide"><img src="photo3.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 3 💖</p></div></div></div>
+  <div class="slide"><img src="photo4.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 4 💖</p></div></div></div>
+  <div class="slide"><img src="photo5.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 5 💖</p></div></div></div>
+  <div class="slide"><img src="photo6.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 6 💖</p></div></div></div>
+  <div class="slide"><img src="photo7.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 7 💖</p></div></div></div>
+  <div class="slide"><img src="photo8.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 8 💖</p></div></div></div>
+  <div class="slide"><img src="photo9.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 9 💖</p></div></div></div>
+  <div class="slide"><img src="photo10.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 10 💖</p></div></div></div>
+  <div class="slide"><img src="photo11.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 11 💖</p></div></div></div>
+  <div class="slide"><img src="photo12.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 12 💖</p></div></div></div>
+  <div class="slide"><img src="photo13.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 13 💖</p></div></div></div>
+  <div class="slide"><img src="photo14.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 14 💖</p></div></div></div>
+  <div class="slide"><img src="photo15.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 15 💖</p></div></div></div>
+  <div class="slide"><img src="photo16.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 16 💖</p></div></div></div>
+  <div class="slide"><img src="photo17.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 17 💖</p></div></div></div>
+  <div class="slide"><img src="photo18.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 18 💖</p></div></div></div>
+  <div class="slide"><img src="photo19.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 19 💖</p></div></div></div>
+  <div class="slide"><img src="photo20.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 20 💖</p></div></div></div>
+  <div class="slide"><img src="photo21.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 21 💖</p></div></div></div>
+  <div class="slide"><img src="photo22.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 22 💖</p></div></div></div>
+  <div class="slide"><img src="photo23.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 23 💖</p></div></div></div>
+  <div class="slide"><img src="photo24.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 24 💖</p></div></div></div>
+  <div class="slide"><img src="photo25.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 25 💖</p></div></div></div>
+  <div class="slide"><img src="photo26.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 26 💖</p></div></div></div>
+  <div class="slide"><img src="photo27.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 27 💖</p></div></div></div>
+  <div class="slide"><img src="photo28.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 28 💖</p></div></div></div>
+  <div class="slide"><img src="photo29.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 29 💖</p></div></div></div>
+  <div class="slide"><img src="photo30.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 30 💖</p></div></div></div>
+  <div class="slide"><img src="photo31.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 31 💖</p></div></div></div>
+  <div class="slide"><img src="photo32.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 32 💖</p></div></div></div>
+  <div class="slide"><img src="photo33.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 33 💖</p></div></div></div>
+  <div class="slide"><img src="photo34.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 34 💖</p></div></div></div>
+  <div class="slide"><img src="photo35.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 35 💖</p></div></div></div>
+  <div class="slide"><img src="photo36.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 36 💖</p></div></div></div>
+  <div class="slide"><img src="photo37.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 37 💖</p></div></div></div>
+  <div class="slide"><img src="photo38.jpg" loading="lazy"><div class="slide-vignette"></div><div class="caption"><div class="caption-inner"><p>Memory 38 💖</p></div></div></div>
+
+  <div id="controls">
+    <button class="ctrl-btn" onclick="prevSlide()" title="Previous">&#8592;</button>
+    <button class="ctrl-btn" id="pauseBtn" onclick="togglePause()" title="Pause">&#10074;&#10074;</button>
+    <button class="ctrl-btn" onclick="nextSlide()" title="Next">&#8594;</button>
+  </div>
+</section>
+
+<!-- ── END SCREEN ── -->
+<section id="endScreen">
+  <div style="font-size:4rem; margin-bottom:1rem; animation: float 3s ease-in-out infinite;">🎉</div>
+  <h2>Thank You for<br><span>Every Memory</span></h2>
+  <p>Here's to so many more beautiful moments together. Happy Birthday ❤️</p>
+  <button class="replay-btn" onclick="replaySlideshow()">Replay from the Start ↺</button>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<script>
+// ── Floating hearts background ──
+(function() {
+  const canvas = document.getElementById('heartsCanvas');
+  const ctx = canvas.getContext('2d');
+  function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const hearts = Array.from({length: 22}, () => ({
+    x: Math.random() * window.innerWidth,
+    y: Math.random() * window.innerHeight,
+    size: 8 + Math.random() * 16,
+    speed: 0.25 + Math.random() * 0.5,
+    opacity: 0.04 + Math.random() * 0.1,
+    drift: (Math.random() - 0.5) * 0.3
+  }));
+
+  function drawHeart(x, y, s, o) {
+    ctx.save();
+    ctx.globalAlpha = o;
+    ctx.fillStyle = '#e8526a';
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.bezierCurveTo(x, y - s*0.3, x - s*0.5, y - s*0.7, x - s*0.5, y - s*0.4);
+    ctx.bezierCurveTo(x - s*0.5, y - s*0.9, x, y - s*0.9, x, y - s*0.55);
+    ctx.bezierCurveTo(x, y - s*0.9, x + s*0.5, y - s*0.9, x + s*0.5, y - s*0.4);
+    ctx.bezierCurveTo(x + s*0.5, y - s*0.7, x, y - s*0.3, x, y);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function loop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    hearts.forEach(h => {
+      drawHeart(h.x, h.y, h.size, h.opacity);
+      h.y -= h.speed; h.x += h.drift;
+      if (h.y < -30) { h.y = canvas.height + 30; h.x = Math.random() * canvas.width; }
+    });
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+// ── Countdown ──
+let countVal = 3;
+const numEl = document.getElementById('countdown-number');
+const enterBtn = document.getElementById('enterBtn');
+
+function tick() {
+  numEl.classList.remove('pulse');
+  void numEl.offsetWidth;
+  numEl.classList.add('pulse');
+  countVal--;
+  if (countVal > 0) {
+    numEl.textContent = countVal;
+    setTimeout(tick, 1000);
+  } else {
+    numEl.textContent = '🎁';
+    document.getElementById('countdown-label').textContent = 'Ready!';
+    enterBtn.style.display = 'inline-block';
+  }
+}
+setTimeout(tick, 1400);
+
+// ── Slideshow ──
+const slides = document.querySelectorAll('#slideshow .slide');
+const TOTAL = slides.length;
+let current = 0, paused = false, timer = null;
+
+function showSlide(idx) {
+  slides.forEach(s => { s.classList.remove('active'); s.style.display = 'none'; });
+  slides[idx].style.display = 'block';
+  void slides[idx].offsetWidth;
+  slides[idx].classList.add('active');
+  document.getElementById('counterText').textContent = `${idx + 1} / ${TOTAL}`;
+  document.getElementById('progress-fill').style.width = `${((idx + 1) / TOTAL) * 100}%`;
+}
+
+function nextSlide() {
+  clearTimeout(timer);
+  if (current >= TOTAL - 1) { showEndScreen(); return; }
+  current++;
+  showSlide(current);
+  if (!paused) scheduleNext();
+}
+
+function prevSlide() {
+  clearTimeout(timer);
+  current = Math.max(0, current - 1);
+  showSlide(current);
+  if (!paused) scheduleNext();
+}
+
+function scheduleNext() { timer = setTimeout(nextSlide, 2200); }
+
+function togglePause() {
+  paused = !paused;
+  const btn = document.getElementById('pauseBtn');
+  if (paused) { clearTimeout(timer); btn.innerHTML = '&#9654;'; }
+  else { btn.innerHTML = '&#10074;&#10074;'; scheduleNext(); }
+}
+
+function startSlideshow() {
+  const music = document.getElementById('bgMusic');
+  music.volume = 0; music.play();
+  let v = 0;
+  const fi = setInterval(() => { v = Math.min(v + 0.05, 1); music.volume = v; if (v >= 1) clearInterval(fi); }, 120);
+
+  confetti({ particleCount: 180, spread: 130, origin: { y: 0.5 } });
+  setTimeout(() => confetti({ particleCount: 120, spread: 90, origin: { x: 0.2, y: 0.6 } }), 400);
+  setTimeout(() => confetti({ particleCount: 120, spread: 90, origin: { x: 0.8, y: 0.6 } }), 700);
+
+  document.getElementById('intro').classList.add('hide');
+  setTimeout(() => {
+    document.getElementById('intro').style.display = 'none';
+    document.getElementById('slideshow').style.display = 'block';
+    showSlide(0);
+    scheduleNext();
+  }, 850);
+}
+
+function showEndScreen() {
+  clearTimeout(timer);
+  document.getElementById('slideshow').style.display = 'none';
+  document.getElementById('endScreen').style.display = 'flex';
+  setTimeout(() => confetti({ particleCount: 250, spread: 160, origin: { y: 0.5 } }), 300);
+}
+
+function replaySlideshow() {
+  document.getElementById('endScreen').style.display = 'none';
+  document.getElementById('slideshow').style.display = 'block';
+  current = 0; paused = false;
+  document.getElementById('pauseBtn').innerHTML = '&#10074;&#10074;';
+  showSlide(0);
+  scheduleNext();
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight') nextSlide();
+  if (e.key === 'ArrowLeft')  prevSlide();
+  if (e.key === ' ') { e.preventDefault(); togglePause(); }
+});
+</script>
+</body>
+</html>
